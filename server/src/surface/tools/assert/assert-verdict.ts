@@ -45,23 +45,22 @@ import { gradeOfPredicate } from './assert-grade.js';
 import { assertSource, stampedSourceIn } from './assert-source.js';
 import { VerdictAttribution, verdictAttributionOf } from '@reticlehq/core';
 import { noteSourceSeen } from '@/portal/session/recorded-gaps.js';
-import { describeSdkBehind } from '@/command/version/version-skew.js';
-import { SERVER_VERSION } from '@/command/version/identity/server-version.js';
-
-/** What to run so the page picks up the daemon's SDK — the update the overlay already shows. */
-const UPDATE_THE_SDK = "Run `reticle update` in the app's folder, then restart its dev server.";
+import { sdkBehindNote } from '@/portal/session/session-info.js';
 
 // Unanchored: the engine prefixes the reason with "the page did not answer:".
 const COMMAND_TIMEOUT = /command '[^']*' timed out after (\d+)ms/;
 
 /**
  * The cause and the one fix for a read that came back `unknown`, in place of a bare fact (#1990).
- * A page whose SDK is behind this daemon may not serve `match` at all, so the fix is the SDK-behind
- * sentence — page version, daemon version, `reticle update`. On a current page the read ran out of
- * the assertion's own budget, and the fix is more of it.
+ * A page whose SDK is behind this daemon may not serve `match` at all, so the fix is the same
+ * SDK-behind sentence the listing shows. On a current page the read ran out of the assertion's own
+ * budget, and the fix is more of it.
  */
-function diagnoseTimeout(reason: string, sdkVersion: string | undefined): string {
-  const behind = describeSdkBehind(sdkVersion, SERVER_VERSION, () => UPDATE_THE_SDK);
+function diagnoseTimeout(
+  reason: string,
+  session: { readonly sdkVersion?: string | undefined },
+): string {
+  const behind = sdkBehindNote(session);
   if (behind !== undefined) {
     return `${reason} ${behind}`;
   }
@@ -220,7 +219,7 @@ export async function assertVerdict(
   // A timed-out page read is the one `unknown` whose cause and fix are knowable here (#1990).
   let effectiveInconclusive: string | undefined = rawInconclusive;
   if (rawInconclusive !== undefined && COMMAND_TIMEOUT.test(rawInconclusive)) {
-    effectiveInconclusive = diagnoseTimeout(rawInconclusive, session.sdkVersion);
+    effectiveInconclusive = diagnoseTimeout(rawInconclusive, session);
   }
   /**
    * Does a green here rest on the window having been COMPLETE?

@@ -178,7 +178,10 @@ function describeUnreadable(why: string): string {
  * Why a match is refused before the round-trip (#1990): the page DECLARED its commands and match is
  * not one of them, so sending it could only end in a timeout that reads as a slow page.
  */
-function matchNotServedMessage(sdkVersion: string | undefined, declared: readonly string[]): string {
+function matchNotServedMessage(
+  sdkVersion: string | undefined,
+  declared: readonly string[],
+): string {
   const sdk = sdkVersion === undefined ? 'does not serve' : `is ${sdkVersion} and does not serve`;
   return (
     `this page's SDK ${sdk} 'match': it declared ${String(declared.length)} command(s) when it ` +
